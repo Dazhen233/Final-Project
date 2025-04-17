@@ -1,0 +1,169 @@
+
+我们计划做一个教3-7岁小孩学英语的互动绘本web应用，孩子可以选择去自己的动漫人物来一起冒险，通过再冒险中的对话增强孩子的听说和认识单词的能力。大概流程是这样：
+1. 孩子打开页面后显示一个背景图，上面有小马宝利，白雪公主，灰姑娘，以及汪汪队和托马斯，然后网页里定期发出声音，询问小朋友想和谁去一起大冒险。
+2. 小朋友发出语音后，LLM判断是否是待选择的动漫角色之一，如果不是，那么需要引导小朋友做出正确选择
+3. 小朋友选择动漫角色后，LLM就创作适合小孩子的故事的第一段文字，并生成合适的1920x1080的图片，以及匹配动漫角色的声音。在这一段的结尾，通过让小朋友回答问题，或者做选择的方式，让小朋友给出选择，然后LLM产生下一阶段的故事的内容文字，再生成合适的图片以及声音。
+4. 要能引导孩子多说话，鼓励小朋友多说，而不是简单的只听。最好能根据孩子的回答判断孩子的英语程度，匹配合适的问题难度，鼓励孩子多多表达。
+5. 给小朋友说的故事内容要合适，单词量要适合儿童的年龄。
+6. 每次生成的图片里的动漫角色要一致，而不是每次不同。我可以提供每个动漫角色的定妆照文件。
+7. 请帮我生成的代码里加上给大模型的合适的完整的提示词。
+我的前端准备用react, 后端准备用langchain/python,数据库就用sqlite
+故事创作和tts用openai的api
+图片创作并保持角色一致性用https://platform.stability.ai/的api,初期使用ControlNet， 跑通之后再考虑更换为LoRA技术
+
+框架设计：
+✅ OpenAI Assistants API → 用一个 AI Orchestration LLM 管理多个 function calls
+✅ AutoGPT → 用 LLM 控制不同任务代理，自己决定执行顺序
+✅ HuggingGPT → 用一个 LLM 管理 Hugging Face 上的不同模型
+
+我们可以参考 HuggingGPT 的思路：
+
+控制 LLM 解析用户输入，决定调用哪个子任务（故事、图片、语音）。
+子任务 LLM 只专注于自己的任务，比如 GPT-4 生成故事，Stable Diffusion 生成图片，ElevenLabs 生成语音。
+结果可以再返回给控制 LLM，由它决定如何组合这些内容，并引导孩子继续互动。
+
+本架构需要多个 LLM 维护各自的上下文，特别是控制 LLM 和故事 LLM，它们的上下文需要独立管理。
+如果不做处理，控制 LLM 可能会把所有历史信息混在一起，导致故事 LLM 失去一致性，或者控制 LLM 误解用户输入。
+使用 LangChain 的 Multi-Memory 机制
+LangChain 支持多个独立的 Memory（记忆模块），可以给不同的 LLM 维护各自的上下文。
+这里的核心思路是：
+
+控制 LLM 只保存任务管理上下文（用户的意图、当前状态）。
+故事 LLM 维护自己的独立上下文（完整的故事内容）。
+用户的输入只影响相关 LLM（比如用户选了角色，故事 LLM 才更新上下文，而控制 LLM 不需要）。
+
+用户输入默认给控制 LLM。
+如果是“继续故事”，就交给故事 LLM。
+用户的输入不会影响错误的 LLM 上下文！
+✅ 控制 LLM 只存储“任务管理”信息，不存故事内容。
+✅ 故事 LLM 维护自己的独立上下文，保证故事的连贯性。
+✅ 用户的输入通过意图识别，分配到合适的 LLM（控制 LLM / 故事 LLM）。
+✅ 使用 LangChain Memory 管理多个 LLM 的独立上下文，避免互相干扰。
+
+
+架构采用如下方式：
+graph LR
+    A[前端React] --> B[API Gateway]
+    B --> C[Session Management]
+    B --> D[Async Task Queue]
+    D --> E[Story Generation]
+    D --> F[Image Rendering]
+    D --> G[Audio Synthesis]
+    E --> H[(Vector DB)]  # 存储故事线
+    E --> J[openai API]
+    F --> I[Stability API] # 角色一致性引擎 ControlNet
+    G --> J[openai API]
+
+目录结构如下：    
+StoryBook-WebApp/
+├── frontend/                  # React前端
+│   └── public/
+│       └── characters/       # 角色定妆照资源
+│
+├── backend/
+│   ├── app/
+│   │   ├── api/              # API路由层
+│   │   │   ├── routes/       # 路由模块化拆分
+│   │   │   │   ├── story.py       # 故事流程相关
+│   │   │   │   └── interaction.py # 互动相关 
+│   │   ├── core/
+│   │   │   ├── agents/       # 新增：智能体模块
+│   │   │   │   ├── story_agent.py    # 故事生成智能体
+│   │   │   │   └── dialog_agent.py    # 对话评估智能体
+│   │   │   ├── rendering/
+│   │   │   │   ├── image_controller.py # 统一图像接口
+│   │   │   │   └── tts_controller.py   # 统一语音接口
+│   │   │   ├── memory/
+│   │   │   │   ├── session_manager.py  # 会话管理
+│   │   │   │   └── knowledge_graph.py  # 改为知识图谱存储
+│   │   ├── models/
+│   │   │   ├── schemas.py     # Pydantic模型
+│   │   │   └── database.py    # SQLAlchemy模型
+│   │   ├── utils/
+│   │   │   ├── prompts/       # 新增：提示词模板目录
+│   │   │   │   ├── story_gen.jinja2
+│   │   │   │   └── dialog_eval.jinja2
+│   ├── config/                # 新增独立配置目录
+│   │   ├── __init__.py
+│   │   └── settings.py        # 分层配置
+│   ├── workers/
+│   │   ├── image_worker.py    # 图像生成工作器
+│   │   └── tts_worker.py      # 语音合成工作器
+│   └── scripts/               # 新增：训练脚本等
+
+
+
+STORY_PROMPT_TEMPLATE = """
+You are a children's English teaching assistant. Generate a story that:
+
+1. Contains exactly {difficulty_level} new vocabulary words from CEFR A1 list
+2. Includes 3 interactive decision points marked with [CHOICE]
+3. Use simple past tense and present continuous tense
+4. Main character: {character_name} from {character_source}
+5. Current story state: {current_state}
+
+Respond in JSON format:
+{
+  "story_text": "...",
+  "choices": ["...", "...", "..."],
+  "target_vocab": ["...", "..."]
+}
+"""    
+
+sequenceDiagram
+    Frontend->>+Backend: POST /generate
+    Backend->>+Celery: 创建任务
+    Celery->>+OpenAI: 生成故事文本
+    Celery->>+Stability: 生成角色图像
+    Celery->>+OpenAI: 生成语音
+    Celery-->>-Backend: 返回结果
+    Backend-->>-Frontend: 返回完整响应
+
+知识图谱结构：
+graph TD
+    A[分类节点] --> B[具体词汇]
+    C[词汇属性] --> B
+    B --> D[相关词汇]
+    D --> E[应用场景]
+
+拓展：
+集成nlp工具
+import spacy
+nlp = spacy.load("en_core_web_sm")
+
+def _extract_keywords(self, text):
+    doc = nlp(text)
+    return [chunk.text for chunk in doc.noun_chunks]
+
+实时的图谱更新
+def add_real_time_data(self, interaction):
+    """实时添加新数据"""
+    self._process_interaction(interaction)
+    # 触发增量学习
+    self._update_centrality_scores()
+
+个性化推荐增强
+def personalized_recommend(self, learning_style: str):
+    """根据学习风格调整推荐策略"""
+    if learning_style == "visual":
+        return self._select_visual_topics()
+    elif learning_style == "auditory":
+        return self._select_audio_topics()
+
+@router.post("/generate")
+async def generate_story(
+    request: StoryRequest,  # 包含用户ID、语音文本、选择路径
+    background_tasks: BackgroundTasks
+):
+    # 异步处理三个通道
+    background_tasks.add_task(handle_dialogue_generation, request)
+    background_tasks.add_task(initiate_image_rendering, request)
+    background_tasks.add_task(prefetch_audio_resources, request)
+    return {"status": "processing"}
+
+uvicorn main:app --reload    
+
+curl -X POST "http://localhost:8000/story/process" -H "Content-Type: application/json" -d '{
+  "user_id": "user562",
+  "user_input": "Snow White Princess"
+}'

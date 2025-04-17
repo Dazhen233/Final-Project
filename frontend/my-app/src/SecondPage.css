@@ -1,0 +1,94 @@
+.fullPageBackground {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1; /* 让背景保持在最底层 */
+  }
+  
+  .background {
+    width: 1920px;
+    height: 1080px;
+    background-size: contain; /* 或 cover */
+    background-position: center;
+    background-repeat: no-repeat;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .option-img {
+    position: absolute;
+    width: 296px;
+    height: 840px;
+    opacity: 0;
+    filter: brightness(0.7);
+    transform: translateY(200px);
+    cursor: pointer;
+    transition: 
+        filter 0.3s ease-in-out,  /* 悬停变亮的时间 */
+        transform 0.5s ease-in-out; /* 放大缩小的时间 */
+    border-radius: 50px;
+}
+  
+  /*具体的图片位置 */
+  .pawPatrol {
+    left: 173px; /* 设置 X 轴位置 */
+    top: 120px;  /* 设置 Y 轴位置 */
+  }
+  
+  .snowWhite{
+    left: 599px;
+    top: 120px;
+  }
+  
+  .thomas{
+    left: 1025px;
+    top: 120px;
+  }
+  
+  .cinderella {
+    left: 1451px;
+    top: 120px;
+  }
+  
+  .option-img.show {
+    opacity: 1;
+    animation: flyIn 1.5s ease-out forwards;
+}
+
+@keyframes flyIn {
+    0% {
+        opacity: 0;
+        transform: translateY(200px); /* 初始状态 */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0); /* 最终位置 */
+    }
+}
+
+
+/* 鼠标悬停时：放大 + 变亮 */
+.option-img:hover {
+    filter: brightness(1.2);
+    transform: scale(1.05)!important;
+    transition: filter 0.3s ease-in-out, transform 0.5s ease-in-out;
+}
+
+.option-img:active {
+    filter: brightness(0.5);
+    transform: scale(0.98)!important;
+    transition: filter 0.1s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.option-img{
+    user-select: none; /* 禁止选中 */
+    -webkit-user-drag: none; /* 禁止拖拽 */
+  }
+

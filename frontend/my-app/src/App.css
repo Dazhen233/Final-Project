@@ -1,0 +1,226 @@
+.fullPageBackground {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1; /* 让背景保持在最底层 */
+}
+
+.background {
+  width: 1920px;
+  height: 1080px;
+  background-size: contain; /* 或 cover */
+  background-position: center;
+  background-repeat: no-repeat;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* **按钮的基本样式** */
+.startButton {
+  position: absolute;
+  width: 550px; 
+  height: auto;
+  left: 1000px;
+  top: 260px;
+  transform: translate(-50%, -50%); 
+  cursor: pointer; 
+  transition: opacity 1s ease-in-out;
+  animation: floatAnimation 3s ease-in-out infinite alternate;
+}
+
+.nextButton {
+  position: absolute;
+  width: 240px;
+  height: auto;
+  left: 1055px;
+  top: 550px;
+  cursor: pointer;
+  transition: opacity 1.5s ease-in-out;
+  opacity: 0;
+}
+
+.clicked {
+  filter: brightness(0.6);
+}
+
+.startPageTitle {
+  position: absolute;
+  width: 750px; 
+  height: auto;
+  left: 800px;
+  top: 200px;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  animation: floatAnimation1 3s ease-in-out infinite alternate;
+}
+
+.fade-in {
+  opacity: 0; /* 确保默认隐藏 */
+  animation: fadeInEffect 2.5s ease-in-out forwards, floatAnimation2 3s ease-in-out infinite alternate;
+}
+
+/* **按钮的淡出动画（点击后生效）** */
+.fade-out {
+  opacity: 0;
+}
+
+.delayed-fade-in {
+  opacity: 0; /* 确保默认隐藏 */
+  animation: fadeInEffect 1.5s ease-in-out forwards, floatAnimation1 3s ease-in-out infinite alternate;
+  animation-delay: 5.5s; /* 5.5s 后才触发 */
+}
+
+.prince, .princess, .fairy, .witch{
+  position: absolute;
+  opacity: 0; /* 初始隐藏，避免提前显示 */
+}
+
+/* 公主动画 */
+.princess {
+  position: absolute;
+  width: 300px;  /* 调整大小 */
+  height: auto;
+  left: 1500px;  /* 指定 X 坐标 */
+  top: 100px;  /* 指定 Y 坐标 */
+  animation: moveToPrincess 2s ease-out forwards, floatAnimation 3s ease-in-out infinite alternate;
+  animation-delay: 3s;
+}
+
+/* 王子动画 */
+.prince {
+  position: absolute;
+  width: 340px;
+  height: auto;
+  left: 620px; /* 指定 X 坐标 */
+  top: 50px;  /* 指定 Y 坐标 */
+  animation: moveToPrince 3s ease-out forwards, floatAnimation 4s ease-in-out infinite alternate;
+  animation-delay: 2s;
+}
+
+/* 仙女动画 */
+.fairy{
+  position: absolute;
+  width: 420px;  /* 调整大小 */
+  height: auto;
+  left: 1500px;  /* 指定 X 坐标 */
+  top: 600px;  /* 指定 Y 坐标 */
+  animation: moveToFairy 1.5s ease-out forwards, floatAnimation 4.5s ease-in-out infinite alternate;
+  animation-delay: 3.5s;
+}
+
+/* 女巫动画 */
+.witch{
+  position: absolute;
+  width: 300px;  /* 调整大小 */
+  height: auto;
+  left: 600px;  /* 指定 X 坐标 */
+  top: 550px;  /* 指定 Y 坐标 */
+  animation:moveToWitch 1s ease-out forwards, floatAnimation 5s ease-in-out infinite alternate;
+  animation-delay: 4s;
+}
+
+@keyframes fadeInEffect {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes moveToPrince {
+  0% {
+      left: -200px;  /* 从屏幕左外面开始 */
+      top: -200px;   /* 从屏幕上方开始 */
+      opacity: 0;
+  }
+  100% {
+      left: 620px;  /* 目标位置 */
+      top: 50px;
+      opacity: 1;
+  }
+}
+
+@keyframes moveToPrincess {
+  0% {
+      left: 2120px;  
+      top: -200px;   
+      opacity: 0;
+  }
+  100% {
+      left: 1500px;  
+      top: 100px;
+      opacity: 1;
+  }
+}
+
+@keyframes moveToFairy {
+  0% {
+      left: 2120px;  /* 从屏幕左外面开始 */
+      top: 1280px;   /* 从屏幕上方开始 */
+      opacity: 0;
+  }
+  100% {
+      left: 1500px;  /* 指定 X 坐标 */
+      top: 600px;  /* 指定 Y 坐标 */
+      opacity: 1;
+  }
+}
+
+@keyframes moveToWitch {
+  0% {
+      left: -200px;  /* 从屏幕左外面开始 */
+      top: 1280px;   /* 从屏幕上方开始 */
+      opacity: 0;
+  }
+  100% {
+      left: 600px;  /* 指定 X 坐标 */
+      top: 550px;  /* 指定 Y 坐标 */
+      opacity: 1;
+  }
+}
+
+/* 上下浮动动画 */
+@keyframes floatAnimation {
+  0% {
+      transform: translateY(0);
+  }
+  100% {
+      transform: translateY(-50px); /* 向上移动 30px */
+  }
+}
+
+@keyframes floatAnimation1 {
+  0% {
+      transform: translateY(0);
+  }
+  100% {
+      transform: translateY(-20px); /* 向上移动 30px */
+  }
+}
+
+@keyframes floatAnimation2 {
+  0% {
+      transform: translateY(0);
+  }
+  100% {
+      transform: translateY(-15px); /* 向上移动 30px */
+  }
+}
+
+.background,
+.prince,
+.princess,
+.fairy,
+.witch,
+.startPageTitle{
+  user-select: none; /* 禁止选中 */
+  -webkit-user-drag: none; /* 禁止拖拽 */
+}
